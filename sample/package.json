@@ -32,7 +32,8 @@
     "metro-react-native-babel-preset": "^0.59.0",
     "mkdirp": "^1.0.0",
     "react-native-test-app": "^0.9.3",
-    "react-test-renderer": "16.13.1"
+    "react-test-renderer": "16.13.1",
+    "react-native-video": "../"
   },
   "jest": {
     "preset": "react-native"

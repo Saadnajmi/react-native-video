@@ -8,10 +8,19 @@
 
 RCT_EXPORT_MODULE();
 
+
+#if !TARGET_OS_OSX
 - (UIView *)view
 {
-  return [[RCTVideo alloc] initWithEventDispatcher:self.bridge.eventDispatcher];
+	return [[RCTVideo alloc] initWithEventDispatcher:self.bridge.eventDispatcher];
 }
+#else
+- (NSView *)view
+{
+	return [[NSView alloc] init];
+}
+#endif // !TARGET_OS_OSX
+
 
 - (dispatch_queue_t)methodQueue
 {

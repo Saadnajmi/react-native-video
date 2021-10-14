@@ -7,9 +7,17 @@
 //
 //  Source: http://stackoverflow.com/a/3732812/1123156
 
+#if !TARGET_OS_OSX
 #import <UIKit/UIKit.h>
+#else
+#import <React/RCTUIKit.h>
+#endif
 
+#if !TARGET_OS_OSX
 @interface UIView (FindUIViewController)
+#else
+@interface RCTUIView (FindUIViewController)
+#endif
 - (UIViewController *) firstAvailableUIViewController;
 - (id) traverseResponderChainForUIViewController;
 @end

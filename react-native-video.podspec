@@ -14,9 +14,10 @@ Pod::Spec.new do |s|
 
   s.ios.deployment_target = "8.0"
   s.tvos.deployment_target = "9.0"
+  s.osx.deployment_target = "10.14"
 
   s.subspec "Video" do |ss|
-    ss.source_files  = "ios/Video/*.{h,m}"
+    ss.source_files  = "apple/Video/*.{h,m}"
     s.static_framework = true
   end
 
@@ -25,7 +26,7 @@ Pod::Spec.new do |s|
     ss.dependency "SPTPersistentCache", "~> 1.1.0"
     ss.dependency "DVAssetLoaderDelegate", "~> 0.3.1"
 
-    ss.source_files = "ios/VideoCaching/**/*.{h,m}"
+    ss.source_files = "apple/VideoCaching/**/*.{h,m}"
     s.static_framework = true
   end
 
