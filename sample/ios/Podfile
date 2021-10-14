@@ -4,4 +4,10 @@ use_flipper!({ 'Flipper' => '0.75.1', 'Flipper-Folly' => '2.5.3' })
 
 workspace 'sample.xcworkspace'
 
-use_test_app!
+use_test_app! do |target|
+    target.app do
+      platform :ios, '8.0'
+      pod 'react-native-video', :path => '../../react-native-video.podspec'
+
+    end
+end

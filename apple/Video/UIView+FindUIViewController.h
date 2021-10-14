@@ -16,7 +16,7 @@
 #if !TARGET_OS_OSX
 @interface UIView (FindUIViewController)
 #else
-@interface RCTUIView (FindUIViewController)
+@interface UIView (FindUIViewController)
 #endif
 - (UIViewController *) firstAvailableUIViewController;
 - (id) traverseResponderChainForUIViewController;
