@@ -10,6 +10,7 @@
 #import "RCTVideo.h"
 #import "RCTVideoPlayerViewControllerDelegate.h"
 
+#if !TARGET_OS_OSX
 @interface RCTVideoPlayerViewController : AVPlayerViewController
 @property (nonatomic, weak) id<RCTVideoPlayerViewControllerDelegate> rctDelegate;
 
@@ -18,3 +19,4 @@
 @property (nonatomic) BOOL autorotate;
 
 @end
+#endif

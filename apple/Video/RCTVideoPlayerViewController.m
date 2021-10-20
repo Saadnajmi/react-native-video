@@ -1,3 +1,4 @@
+#if !TARGET_OS_OSX
 #import "RCTVideoPlayerViewController.h"
 
 @interface RCTVideoPlayerViewController ()
@@ -40,4 +41,6 @@
 }
 #endif
 
+
 @end
+#endif

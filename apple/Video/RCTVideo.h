@@ -17,8 +17,10 @@
 @interface RCTVideo : UIView <RCTVideoPlayerViewControllerDelegate, DVAssetLoaderDelegatesDelegate, AVAssetResourceLoaderDelegate>
 #elif TARGET_OS_TV
 @interface RCTVideo : UIView <RCTVideoPlayerViewControllerDelegate, AVAssetResourceLoaderDelegate>
-#else
+#elif !TARGET_OS_OSX
 @interface RCTVideo : UIView <RCTVideoPlayerViewControllerDelegate, AVPictureInPictureControllerDelegate, AVAssetResourceLoaderDelegate>
+#else
+@interface RCTVideo : RCTUIView <AVPictureInPictureControllerDelegate, AVAssetResourceLoaderDelegate>
 #endif
 
 @property (nonatomic, copy) RCTDirectEventBlock onVideoLoadStart;
@@ -58,7 +60,9 @@ typedef NS_ENUM(NSInteger, RCTVideoError) {
 
 - (instancetype)initWithEventDispatcher:(RCTEventDispatcher *)eventDispatcher NS_DESIGNATED_INITIALIZER;
 
+#if !TARGET_OS_OSX
 - (AVPlayerViewController*)createPlayerViewController:(AVPlayer*)player withPlayerItem:(AVPlayerItem*)playerItem;
+#endif
 
 - (void)save:(NSDictionary *)options resolve:(RCTPromiseResolveBlock)resolve reject:(RCTPromiseRejectBlock)reject;
 - (void)setLicenseResult:(NSString * )license;

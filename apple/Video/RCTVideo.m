@@ -26,12 +26,15 @@ static int const RCTVideoUnset = -1;
 {
   AVPlayer *_player;
   AVPlayerItem *_playerItem;
+  AVPlayerView *_playerView;
   NSDictionary *_source;
   BOOL _playerItemObserversSet;
   BOOL _playerBufferEmpty;
   AVPlayerLayer *_playerLayer;
   BOOL _playerLayerObserverSet;
+#if !TARGET_OS_OSX
   RCTVideoPlayerViewController *_playerViewController;
+#endif
   NSURL *_videoURL;
   BOOL _requestingCertificate;
   BOOL _requestingCertificateErrored;
@@ -120,6 +123,7 @@ static int const RCTVideoUnset = -1;
     _pictureInPicture = false;
     _ignoreSilentSwitch = @"inherit"; // inherit, ignore, obey
     _mixWithOthers = @"inherit"; // inherit, mix, duck
+    
 #if TARGET_OS_IOS
     _restoreUserInterfaceForPIPStopCompletionHandler = NULL;
 #endif
@@ -149,7 +153,8 @@ static int const RCTVideoUnset = -1;
   
   return self;
 }
-
+#if !TARGET_OS_OSX
+//create AVPlayer?
 - (RCTVideoPlayerViewController*)createPlayerViewController:(AVPlayer*)player
                                              withPlayerItem:(AVPlayerItem*)playerItem {
   RCTVideoPlayerViewController* viewController = [[RCTVideoPlayerViewController alloc] init];
@@ -161,6 +166,7 @@ static int const RCTVideoUnset = -1;
   viewController.player = player;
   return viewController;
 }
+#endif
 
 /* ---------------------------------------------------------
  **  Get the duration for a AVPlayerItem.
@@ -236,7 +242,10 @@ static int const RCTVideoUnset = -1;
   if (_playInBackground) {
     // Needed to play sound in background. See https://developer.apple.com/library/ios/qa/qa1668/_index.html
     [_playerLayer setPlayer:nil];
+    #if !TARGET_OS_OSX
     [_playerViewController setPlayer:nil];
+    #endif
+      
   }
 }
 
@@ -245,7 +254,9 @@ static int const RCTVideoUnset = -1;
   [self applyModifiers];
   if (_playInBackground) {
     [_playerLayer setPlayer:_player];
+    #if !TARGET_OS_OSX
     [_playerViewController setPlayer:_player];
+    #endif
   }
 }
 
@@ -608,7 +619,6 @@ static int const RCTVideoUnset = -1;
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
 {
-
   if([keyPath isEqualToString:readyForDisplayKeyPath] && [change objectForKey:NSKeyValueChangeNewKey] && self.onReadyForDisplay) {
     self.onReadyForDisplay(@{@"target": self.reactTag});
     return;
@@ -739,24 +749,28 @@ static int const RCTVideoUnset = -1;
                                              @"target": self.reactTag});
       }
     }
-  } else if (object == _playerViewController.contentOverlayView) {
-      // when controls==true, this is a hack to reset the rootview when rotation happens in fullscreen
-      if ([keyPath isEqualToString:@"frame"]) {
+  } else
+    {
+        #if !TARGET_OS_OSX
+          if (object == _playerViewController.contentOverlayView) {
+          // when controls==true, this is a hack to reset the rootview when rotation happens in fullscreen
+          if ([keyPath isEqualToString:@"frame"]) {
 
-        CGRect oldRect = [change[NSKeyValueChangeOldKey] CGRectValue];
-        CGRect newRect = [change[NSKeyValueChangeNewKey] CGRectValue];
+            CGRect oldRect = [change[NSKeyValueChangeOldKey] CGRectValue];
+            CGRect newRect = [change[NSKeyValueChangeNewKey] CGRectValue];
 
-        if (!CGRectEqualToRect(oldRect, newRect)) {
-          if (CGRectEqualToRect(newRect, [UIScreen mainScreen].bounds)) {
-            NSLog(@"in fullscreen");
+            if (!CGRectEqualToRect(oldRect, newRect)) {
+              if (CGRectEqualToRect(newRect, [UIScreen mainScreen].bounds)) {
+                NSLog(@"in fullscreen");
 
-            [self.reactViewController.view setFrame:[UIScreen mainScreen].bounds];
-            [self.reactViewController.view setNeedsLayout];
-          } else NSLog(@"not fullscreen");
-        }
+                [self.reactViewController.view setFrame:[UIScreen mainScreen].bounds];
+                [self.reactViewController.view setNeedsLayout];
+              } else NSLog(@"not fullscreen");
+            }
 
-        return;
-      }
+            return;
+          }
+        #endif
   }
 }
 
@@ -846,7 +860,9 @@ static int const RCTVideoUnset = -1;
 {
   if( _controls )
   {
+#if !TARGET_OS_OSX
     _playerViewController.videoGravity = mode;
+#endif
   }
   else
   {
@@ -1069,8 +1085,10 @@ static int const RCTVideoUnset = -1;
   [self setAllowsExternalPlayback:_allowsExternalPlayback];
 }
 
+//AVAudioSession not available on macOS
 - (void)configureAudio
 {
+#if !TARGET_OS_OSX
     AVAudioSession *session = [AVAudioSession sharedInstance];
     AVAudioSessionCategory category = nil;
     AVAudioSessionCategoryOptions options = nil;
@@ -1094,6 +1112,7 @@ static int const RCTVideoUnset = -1;
     } else if (category == nil && options != nil) {
       [session setCategory:session.category withOptions:options error:nil];
     }
+#endif
 }
 
 - (void)setRepeat:(BOOL)repeat {
@@ -1345,6 +1364,8 @@ static int const RCTVideoUnset = -1;
 }
 
 - (void)setFullscreen:(BOOL) fullscreen {
+//PlayerViewController not used on macOS
+#if !TARGET_OS_OSX
   if( fullscreen && !_fullscreenPlayerPresented && _player )
   {
     // Ensure player view controller is not null
@@ -1389,8 +1410,11 @@ static int const RCTVideoUnset = -1;
       [self videoPlayerViewControllerDidDismiss:_playerViewController];
     }];
   }
+#endif
 }
 
+//PlayerViewController not used on macOS
+#if !TARGET_OS_OSX
 - (void)setFullscreenAutorotate:(BOOL)autorotate {
   _fullscreenAutorotate = autorotate;
   if (_fullscreenPlayerPresented) {
@@ -1427,6 +1451,7 @@ static int const RCTVideoUnset = -1;
     [_playerViewController.contentOverlayView addObserver:self forKeyPath:@"frame" options:NSKeyValueObservingOptionNew | NSKeyValueObservingOptionOld context:NULL];
   }
 }
+#endif
 
 - (void)usePlayerLayer
 {
@@ -1447,24 +1472,40 @@ static int const RCTVideoUnset = -1;
     #if TARGET_OS_IOS
     [self setupPipController];
     #endif
+      
+    _playerView.player = _player;
+    [self addSubview:_playerView];
+      NSLog(@"Got to here");
   }
 }
 
+//PlayerViewController not used on macOS
+
 - (void)setControls:(BOOL)controls
 {
-  if( _controls != controls || (!_playerLayer && !_playerViewController) )
+    if( _controls != controls || (!_playerLayer
+#if !TARGET_OS_OSX
+                                  && !_playerViewController
+#endif
+))
   {
     _controls = controls;
     if( _controls )
     {
       [self removePlayerLayer];
+#if !TARGET_OS_OSX
       [self usePlayerViewController];
+#endif
     }
     else
     {
+#if !TARGET_OS_OSX
       [_playerViewController.view removeFromSuperview];
       _playerViewController = nil;
+#endif
       [self usePlayerLayer];
+      _playerView.player = _player;
+      [self addSubview:_playerView];
     }
   }
 }
@@ -1494,6 +1535,8 @@ static int const RCTVideoUnset = -1;
   _playerLayer = nil;
 }
 
+#if !TARGET_OS_OSX
+//use of Controller, which is iOS specific
 #pragma mark - RCTVideoPlayerViewControllerDelegate
 
 - (void)videoPlayerViewControllerWillDismiss:(AVPlayerViewController *)playerViewController
@@ -1522,6 +1565,7 @@ static int const RCTVideoUnset = -1;
     }
   }
 }
+#endif
 
 - (void)setFilter:(NSString *)filterName {
   _filterName = filterName;
@@ -1555,19 +1599,27 @@ static int const RCTVideoUnset = -1;
 
 #pragma mark - React View Management
 
+#if !TARGET_OS_OSX
 - (void)insertReactSubview:(UIView *)view atIndex:(NSInteger)atIndex
+#else
+- (void)insertReactSubview:(RCTUIView *)view atIndex:(NSInteger)atIndex
+#endif
 {
   // We are early in the game and somebody wants to set a subview.
   // That can only be in the context of playerViewController.
+#if !TARGET_OS_OSX
   if( !_controls && !_playerLayer && !_playerViewController )
   {
     [self setControls:true];
   }
+#endif
   
   if( _controls )
   {
     view.frame = self.bounds;
+#if !TARGET_OS_OSX
     [_playerViewController.contentOverlayView insertSubview:view atIndex:atIndex];
+#endif
   }
   else
   {
@@ -1576,7 +1628,11 @@ static int const RCTVideoUnset = -1;
   return;
 }
 
+#if !TARGET_OS_OSX
 - (void)removeReactSubview:(UIView *)subview
+#else
+- (void)removeReactSubview:(RCTUIView *)subview
+#endif
 {
   if( _controls )
   {
@@ -1594,12 +1650,14 @@ static int const RCTVideoUnset = -1;
   [super layoutSubviews];
   if( _controls )
   {
+#if !TARGET_OS_OSX
     _playerViewController.view.frame = self.bounds;
     
     // also adjust all subviews of contentOverlayView
     for (UIView* subview in _playerViewController.contentOverlayView.subviews) {
       subview.frame = self.bounds;
     }
+#endif
   }
   else
   {
@@ -1607,6 +1665,7 @@ static int const RCTVideoUnset = -1;
     [CATransaction setAnimationDuration:0];
     _playerLayer.frame = self.bounds;
     [CATransaction commit];
+    
   }
 }
 
@@ -1626,13 +1685,16 @@ static int const RCTVideoUnset = -1;
   _player = nil;
   
   [self removePlayerLayer];
-  
+
+//PlayerViewController is not applicable for macOS
+#if !TARGET_OS_OSX
   [_playerViewController.contentOverlayView removeObserver:self forKeyPath:@"frame"];
   [_playerViewController removeObserver:self forKeyPath:readyForDisplayKeyPath];
   [_playerViewController.view removeFromSuperview];
   _playerViewController.rctDelegate = nil;
   _playerViewController.player = nil;
   _playerViewController = nil;
+#endif
   
   [self removePlayerTimeObserver];
   [self removePlayerItemObservers];
